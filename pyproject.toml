@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Final project for RS School Machine Learning course"
 authors = ["Sabina Bayramova <sb.sabina00@gmail.com>"]
 
+[tool.poetry.scripts]
+generate_eda = "forest_cover_type.data.generate_eda_report:generate_eda"
+
 [tool.poetry.dependencies]
 python = "^3.9"
 click = "^8.1.2"
