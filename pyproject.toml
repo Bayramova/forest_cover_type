@@ -6,6 +6,7 @@ authors = ["Sabina Bayramova <sb.sabina00@gmail.com>"]
 
 [tool.poetry.scripts]
 generate_eda = "forest_cover_type.data.generate_eda_report:generate_eda"
+train = "forest_cover_type.models.train:train"
 
 [tool.poetry.dependencies]
 python = "^3.9"
