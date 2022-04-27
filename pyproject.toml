@@ -5,7 +5,7 @@ description = "Final project for RS School Machine Learning course"
 authors = ["Sabina Bayramova <sb.sabina00@gmail.com>"]
 
 [tool.poetry.scripts]
-generate_eda = "forest_cover_type.data.generate_eda_report:generate_eda"
+generate-eda = "forest_cover_type.data.generate_eda_report:generate_eda"
 train = "forest_cover_type.models.train:train"
 
 [tool.poetry.dependencies]
