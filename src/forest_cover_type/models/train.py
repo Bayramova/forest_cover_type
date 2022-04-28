@@ -1,10 +1,8 @@
-from email.policy import default
 from joblib import dump
 
 import click
 
 import pandas as pd
-from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from sklearn.model_selection import cross_validate
 
 from forest_cover_type.data.load_dataset import load_dataset
