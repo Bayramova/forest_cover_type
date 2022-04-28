@@ -3,10 +3,12 @@ from joblib import dump
 import click
 
 import pandas as pd
+from sklearn import pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
 
 @click.command()
@@ -24,13 +26,11 @@ def train(dataset_path, save_model_path, test_split_ratio, random_state, logreg_
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=test_split_ratio, random_state=random_state)
 
-    scaler = StandardScaler()
-    scaler.fit(X_train)
-    classifier = LogisticRegression(C=logreg_c, max_iter=max_iter)
-    classifier.fit(scaler.transform(X_train), y_train)
-
-    y_pred = classifier.predict(scaler.transform(X_val))
-    probs_pred = classifier.predict_proba(scaler.transform(X_val))
+    pipeline = Pipeline(steps=[("scaler", StandardScaler(
+    )), ("clf", LogisticRegression(C=logreg_c, max_iter=max_iter))])
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_val)
+    probs_pred = pipeline.predict_proba(X_val)
     accuracy = accuracy_score(y_true=y_val, y_pred=y_pred)
     click.echo(f"accuracy = {accuracy}")
     logloss = log_loss(y_true=y_val, y_pred=probs_pred)
@@ -39,5 +39,5 @@ def train(dataset_path, save_model_path, test_split_ratio, random_state, logreg_
         y_true=y_val, y_score=probs_pred, multi_class='ovr')
     click.echo(f"roc_auc = {roc_auc}")
 
-    dump(classifier, save_model_path)
+    dump(pipeline, save_model_path)
     click.echo(f"Model is saved to {save_model_path}.")
