@@ -11,7 +11,8 @@ from sklearn.preprocessing import StandardScaler
 @click.option("-d", "--dataset-path", default="data/train.csv", show_default=True, help="Path to csv with data.")
 @click.option("--test-split-ratio", default=0.2, show_default=True, help="Proportion of the dataset to include in the test split, should be between 0.0 and 1.0.")
 @click.option("--random-state", default=42, show_default=True, help="Random state.")
-def train(dataset_path, test_split_ratio, random_state):
+@click.option("--logreg-c", default=1.0, show_default=True, help="Inverse of regularization strength.")
+def train(dataset_path, test_split_ratio, random_state, logreg_c):
     """Script that trains a model and saves it to a file."""
     data = pd.read_csv(dataset_path, index_col="Id")
     X = data.drop(columns=['Cover_Type'])
@@ -21,7 +22,7 @@ def train(dataset_path, test_split_ratio, random_state):
 
     scaler = StandardScaler()
     scaler.fit(X_train)
-    classifier = LogisticRegression(max_iter=500)
+    classifier = LogisticRegression(max_iter=500, C=logreg_c)
     classifier.fit(scaler.transform(X_train), y_train)
     accuracy = accuracy_score(
         y_true=y_val, y_pred=classifier.predict(scaler.transform(X_val)))
