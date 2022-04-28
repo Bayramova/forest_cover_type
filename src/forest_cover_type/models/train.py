@@ -2,11 +2,10 @@ from joblib import dump
 
 import click
 
-import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 
-from .make_pipeline import make_pipeline
+from forest_cover_type.data.load_dataset import load_dataset
+from forest_cover_type.models.make_pipeline import make_pipeline
 
 
 @click.command()
@@ -18,11 +17,8 @@ from .make_pipeline import make_pipeline
 @click.option("--max-iter", default=100, show_default=True, help="Maximum number of iterations taken for the solvers to converge.")
 def train(dataset_path, save_model_path, test_split_ratio, random_state, logreg_c, max_iter):
     """Script that trains a model and saves it to a file."""
-    data = pd.read_csv(dataset_path, index_col="Id")
-    X = data.drop(columns=['Cover_Type'])
-    y = data['Cover_Type']
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=test_split_ratio, random_state=random_state)
+    X_train, X_val, y_train, y_val = load_dataset(
+        dataset_path=dataset_path, test_split_ratio=test_split_ratio, random_state=random_state)
 
     pipeline = make_pipeline(logreg_c=logreg_c, max_iter=max_iter)
     pipeline.fit(X_train, y_train)
