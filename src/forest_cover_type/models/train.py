@@ -17,14 +17,15 @@ from forest_cover_type.models.make_pipeline import make_pipeline
 @click.option("--random-state", default=42, show_default=True, help="Random state.")
 @click.option("--logreg-c", default=1.0, show_default=True, help="Inverse of regularization strength.")
 @click.option("--max-iter", default=100, show_default=True, help="Maximum number of iterations taken for the solvers to converge.")
-def train(dataset_path, save_model_path, test_split_ratio, random_state, logreg_c, max_iter):
+@click.option("--k-folds", default=5, show_default=True, help="Number of folds in cross-validation.")
+def train(dataset_path, save_model_path, test_split_ratio, random_state, logreg_c, max_iter, k_folds):
     """Script that trains a model and saves it to a file."""
     X_train, X_val, y_train, y_val = load_dataset(
         dataset_path=dataset_path, test_split_ratio=test_split_ratio, random_state=random_state)
 
     pipeline = make_pipeline(logreg_c=logreg_c, max_iter=max_iter)
     scores = cross_validate(pipeline, pd.concat([X_train, X_val]), pd.concat(
-        [y_train, y_val]), cv=3, scoring=('accuracy', 'neg_log_loss', 'roc_auc_ovr'))
+        [y_train, y_val]), cv=k_folds, scoring=('accuracy', 'neg_log_loss', 'roc_auc_ovr'))
     click.echo(
         f"Mean accuracy across all CV splits: {scores['test_accuracy'].mean()}")
     click.echo(
