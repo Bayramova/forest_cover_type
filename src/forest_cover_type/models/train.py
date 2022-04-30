@@ -1,4 +1,5 @@
 from joblib import dump
+from typing import Union, Optional
 
 import click
 import mlflow
@@ -19,16 +20,17 @@ from forest_cover_type.models.make_pipeline import make_pipeline
 @click.option("--logreg-c", default=1.0, show_default=True, help="Inverse of regularization strength.")
 @click.option("--max-iter", default=100, show_default=True, help="Maximum number of iterations taken for the solvers to converge.")
 @click.option("--k-folds", default=5, show_default=True, help="Number of folds in cross-validation.")
-@click.option("--model", default="LogisticRegression", show_default=True, help="Name of model for training.")
+@click.option("--model", default="LogisticRegression", type=click.Choice(["LogisticRegression", "RandomForestClassifier"]), show_default=True, help="Name of model for training.")
 @click.option("--n-estimators", default=100, show_default=True, help="The number of trees in the forest.")
-def train(dataset_path, save_model_path, test_split_ratio, random_state, use_scaler, logreg_c, max_iter, k_folds, model, n_estimators):
+@click.option("--max-depth", default=-1, show_default=True, help="The maximum depth of the tree.")
+def train(dataset_path, save_model_path, test_split_ratio, random_state, use_scaler, logreg_c, max_iter, k_folds, model, n_estimators, max_depth):
     """Script that trains a model and saves it to a file."""
     with mlflow.start_run():
         X_train, X_val, y_train, y_val = load_dataset(
             dataset_path=dataset_path, test_split_ratio=test_split_ratio, random_state=random_state)
 
         pipeline = make_pipeline(model=model, use_scaler=use_scaler,
-                                 logreg_c=logreg_c, max_iter=max_iter, random_state=random_state, n_estimators=n_estimators)
+                                 logreg_c=logreg_c, max_iter=max_iter, random_state=random_state, n_estimators=n_estimators, max_depth=max_depth)
 
         scores = cross_validate(pipeline, pd.concat([X_train, X_val]), pd.concat(
             [y_train, y_val]), cv=k_folds, scoring=('accuracy', 'neg_log_loss', 'roc_auc_ovr'))
@@ -46,12 +48,14 @@ def train(dataset_path, save_model_path, test_split_ratio, random_state, use_sca
         dump(pipeline, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")
 
+        mlflow.log_param("use_scaler", use_scaler)
         if model == "LogisticRegression":
-            mlflow.log_param("use_scaler", use_scaler)
             mlflow.log_param("logreg_c", logreg_c)
             mlflow.log_param("max_iter", max_iter)
         elif model == "RandomForestClassifier":
             mlflow.log_param("n_estimators", n_estimators)
+            mlflow.log_param(
+                "max_depth", 'None' if max_depth == -1 else max_depth)
 
         mlflow.log_metrics(
             {"accuracy": accuracy, "log_loss": log_loss, "roc_auc": roc_auc})
