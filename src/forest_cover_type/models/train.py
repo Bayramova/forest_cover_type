@@ -14,6 +14,7 @@ from forest_cover_type.models.make_pipeline import make_pipeline
 @click.command()
 @click.option("-d", "--dataset-path", default="data/train.csv", show_default=True, help="Path to csv with data.")
 @click.option("-s", "--save-model-path", default="models/model.joblib", show_default=True, help="Path to save trained model.")
+@click.option("--save-best-model-path", default="models/best_model.joblib", show_default=True, help="Path to save model with best accuracy across all runs.")
 @click.option("--test-split-ratio", default=0.2, show_default=True, help="Proportion of the dataset to include in the test split, should be between 0.0 and 1.0.")
 @click.option("--random-state", default=42, show_default=True, help="Random state.")
 @click.option("--use-scaler", default=True, show_default=True, help="Specifies whether to scale the data.")
@@ -23,7 +24,7 @@ from forest_cover_type.models.make_pipeline import make_pipeline
 @click.option("--model", default="LogisticRegression", type=click.Choice(["LogisticRegression", "RandomForestClassifier"]), show_default=True, help="Name of model for training.")
 @click.option("--n-estimators", default=100, show_default=True, help="The number of trees in the forest.")
 @click.option("--max-depth", default=-1, show_default=True, help="The maximum depth of the tree.")
-def train(dataset_path, save_model_path, test_split_ratio, random_state, use_scaler, logreg_c, max_iter, k_folds, model, n_estimators, max_depth):
+def train(dataset_path, save_model_path, save_best_model_path, test_split_ratio, random_state, use_scaler, logreg_c, max_iter, k_folds, model, n_estimators, max_depth):
     """Script that trains a model and saves it to a file."""
     with mlflow.start_run(run_name=model):
         X_train, X_val, y_train, y_val = load_dataset(
@@ -60,3 +61,14 @@ def train(dataset_path, save_model_path, test_split_ratio, random_state, use_sca
         mlflow.log_metrics(
             {"accuracy": accuracy, "log_loss": log_loss, "roc_auc": roc_auc})
         mlflow.sklearn.log_model(pipeline, "model")
+
+        # search for best run
+        best_run = mlflow.search_runs(
+            order_by=['metrics.accuracy DESC'], max_results=1).iloc[0]
+        click.echo(f"\nBest run accuracy: {best_run['metrics.accuracy']}")
+
+        # load and save best model
+        best_estimator = mlflow.sklearn.load_model(
+            f"{best_run['artifact_uri']}\model")
+        dump(best_estimator, save_best_model_path)
+        click.echo(f"Best model is saved to {save_best_model_path}.")
