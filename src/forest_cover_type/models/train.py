@@ -48,6 +48,7 @@ def train(dataset_path, save_model_path, test_split_ratio, random_state, use_sca
         dump(pipeline, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")
 
+        mlflow.set_tag("model", model)
         mlflow.log_param("use_scaler", use_scaler)
         if model == "LogisticRegression":
             mlflow.log_param("logreg_c", logreg_c)
