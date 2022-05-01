@@ -3,8 +3,8 @@ from joblib import dump
 import click
 import mlflow
 
-import pandas as pd
-from sklearn.model_selection import cross_validate
+import numpy as np
+from sklearn.model_selection import cross_validate, KFold, GridSearchCV
 
 from forest_cover_type.data.load_dataset import load_dataset
 from forest_cover_type.models.make_pipeline import make_pipeline
@@ -16,53 +16,76 @@ from forest_cover_type.features.build_features import build_features
 @click.option("-s", "--save-model-path", default="models/model.joblib", show_default=True, help="Path to save trained model.")
 @click.option("--save-best-model-path", default="models/best_model.joblib", show_default=True, help="Path to save model with best accuracy across all runs.")
 @click.option("--random-state", default=42, show_default=True, help="Random state.")
-@click.option("--use-scaler", default=True, show_default=True, help="Specifies whether to scale the data.")
+@click.option("--use-scaler", default=False, show_default=True, help="Specifies whether to scale the data.")
 @click.option("--bin-elevation", default=False, show_default=True, help="Specifies whether to bin 'Elevation' feature.")
 @click.option("--log-transform", default=False, show_default=True, help="Specifies whether to log-transform some of highly skewed features.")
-@click.option("--logreg-c", default=1.0, show_default=True, help="Inverse of regularization strength.")
-@click.option("--max-iter", default=100, show_default=True, help="Maximum number of iterations taken for the solvers to converge.")
-@click.option("--penalty", default="l2", show_default=True, type=click.Choice(["l2", "none"]), help="Specify the norm of the penalty.")
-@click.option("--k-folds", default=5, show_default=True, help="Number of folds in cross-validation.")
-@click.option("--model", default="LogisticRegression", type=click.Choice(["LogisticRegression", "RandomForestClassifier"]), show_default=True, help="Name of model for training.")
-@click.option("--n-estimators", default=100, show_default=True, help="The number of trees in the forest.")
-@click.option("--max-depth", default=-1, show_default=True, help="The maximum depth of the tree.")
-@click.option("--min-samples-split", default=2, show_default=True, help="The minimum number of samples required to split an internal node.")
-def train(dataset_path, save_model_path, save_best_model_path, random_state, use_scaler, bin_elevation, log_transform, logreg_c, max_iter, penalty, k_folds, model, n_estimators, max_depth, min_samples_split):
+@click.option("--model", default="RandomForestClassifier", type=click.Choice(["LogisticRegression", "RandomForestClassifier"]), show_default=True, help="Name of model for training.")
+@click.option("--outer-cv-folds", default=5, show_default=True, help="Number of folds in outer cross-validation.")
+@click.option("--inner-cv-folds", default=3, show_default=True, help="Number of folds in inner cross-validation.")
+def train(dataset_path, save_model_path, save_best_model_path, random_state, use_scaler, bin_elevation, log_transform, model, outer_cv_folds, inner_cv_folds):
     """Script that trains a model and saves it to a file."""
     with mlflow.start_run(run_name=model):
         X, y = load_dataset(dataset_path=dataset_path)
         X = build_features(X, bin_elevation=bin_elevation,
                            log_transform=log_transform)
 
-        pipeline = make_pipeline(model=model, use_scaler=use_scaler,
-                                 logreg_c=logreg_c, max_iter=max_iter, penalty=penalty, random_state=random_state, n_estimators=n_estimators, max_depth=max_depth, min_samples_split=min_samples_split)
+        pipeline = make_pipeline(
+            model=model, use_scaler=use_scaler, random_state=random_state)
 
-        scores = cross_validate(pipeline, X, y, cv=k_folds, scoring=(
-            'accuracy', 'neg_log_loss', 'roc_auc_ovr'))
+        # set up parameters grid
+        if model == "LogisticRegression":
+            param_grid = {
+                "clf__C": np.power(10., range(-2, 3)),
+                "clf__max_iter": list(range(500, 1000, 100))
+            }
+        elif model == "RandomForestClassifier":
+            param_grid = {
+                "clf__n_estimators": list(range(100, 600, 100)),
+                "clf__max_depth": list(range(2, 11, 2)) + [None],
+                "clf__min_samples_split": list(range(2, 11, 2))
+            }
+
+        # execute nested cv
+        cv_inner = KFold(n_splits=inner_cv_folds,
+                         shuffle=True, random_state=random_state)
+        gridcv = GridSearchCV(pipeline, param_grid,
+                              scoring="accuracy", n_jobs=-1, cv=cv_inner, refit=True)
+        cv_outer = KFold(n_splits=outer_cv_folds,
+                         shuffle=True, random_state=random_state)
+        scores = cross_validate(gridcv, X, y, cv=cv_outer, scoring=(
+            'accuracy', 'neg_log_loss', 'roc_auc_ovr'), n_jobs=-1)
+
+        # report performance
         accuracy = scores['test_accuracy'].mean()
         log_loss = - scores['test_neg_log_loss'].mean()
         roc_auc = scores['test_roc_auc_ovr'].mean()
         click.echo(
-            f"Mean accuracy across all CV splits: {accuracy}")
+            f"Accuracy: {accuracy} +/- {round(scores['test_accuracy'].std() * 100, 3)}")
         click.echo(
-            f"Mean log_loss across all CV splits: {log_loss}")
+            f"Log_loss: {log_loss} +/- {round(scores['test_neg_log_loss'].std() * 100, 3)}")
         click.echo(
-            f"Mean roc_auc_ovr across all CV splits: {roc_auc}")
+            f"Roc_auc: {roc_auc} +/- {round(scores['test_roc_auc_ovr'].std() * 100, 3)}")
 
-        pipeline.fit(X, y)
-        dump(pipeline, save_model_path)
+        # configure final model
+        gridcv.fit(X, y)
+        click.echo(f"Best Parameters: {gridcv.best_params_}")
+        dump(gridcv.best_estimator_, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")
 
+        # log parameters, metrics and model to mlflow
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_param("bin_elevation", bin_elevation)
         mlflow.log_param("log_transform", log_transform)
         if model == "LogisticRegression":
-            mlflow.log_param("logreg_c", logreg_c)
-            mlflow.log_param("max_iter", max_iter)
+            mlflow.log_param("logreg_c", gridcv.best_params_["clf__C"])
+            mlflow.log_param("max_iter", gridcv.best_params_["clf__max_iter"])
         elif model == "RandomForestClassifier":
-            mlflow.log_param("n_estimators", n_estimators)
+            mlflow.log_param("n_estimators", gridcv.best_params_[
+                             "clf__n_estimators"])
             mlflow.log_param(
-                "max_depth", 'None' if max_depth == -1 else max_depth)
+                "max_depth", gridcv.best_params_["clf__max_depth"])
+            mlflow.log_param("min_samples_split", gridcv.best_params_[
+                             "clf__min_samples_split"])
 
         mlflow.log_metrics(
             {"accuracy": accuracy, "log_loss": log_loss, "roc_auc": roc_auc})
