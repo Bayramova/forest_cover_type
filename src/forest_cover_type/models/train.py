@@ -22,13 +22,14 @@ from forest_cover_type.models.make_pipeline import make_pipeline
 @click.option("--model", default="LogisticRegression", type=click.Choice(["LogisticRegression", "RandomForestClassifier"]), show_default=True, help="Name of model for training.")
 @click.option("--n-estimators", default=100, show_default=True, help="The number of trees in the forest.")
 @click.option("--max-depth", default=-1, show_default=True, help="The maximum depth of the tree.")
-def train(dataset_path, save_model_path, save_best_model_path, random_state, use_scaler, logreg_c, max_iter, k_folds, model, n_estimators, max_depth):
+@click.option("--min-samples-split", default=2, show_default=True, help="The minimum number of samples required to split an internal node.")
+def train(dataset_path, save_model_path, save_best_model_path, random_state, use_scaler, logreg_c, max_iter, k_folds, model, n_estimators, max_depth, min_samples_split):
     """Script that trains a model and saves it to a file."""
     with mlflow.start_run(run_name=model):
         X, y = load_dataset(dataset_path=dataset_path)
 
         pipeline = make_pipeline(model=model, use_scaler=use_scaler,
-                                 logreg_c=logreg_c, max_iter=max_iter, random_state=random_state, n_estimators=n_estimators, max_depth=max_depth)
+                                 logreg_c=logreg_c, max_iter=max_iter, random_state=random_state, n_estimators=n_estimators, max_depth=max_depth, min_samples_split=min_samples_split)
 
         scores = cross_validate(pipeline, X, y, cv=k_folds, scoring=(
             'accuracy', 'neg_log_loss', 'roc_auc_ovr'))
