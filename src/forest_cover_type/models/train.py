@@ -55,6 +55,7 @@ def train(dataset_path, save_model_path, save_best_model_path, random_state, use
 
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_param("bin_elevation", bin_elevation)
+        mlflow.log_param("log_transform", log_transform)
         if model == "LogisticRegression":
             mlflow.log_param("logreg_c", logreg_c)
             mlflow.log_param("max_iter", max_iter)
