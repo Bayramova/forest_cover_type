@@ -1,4 +1,4 @@
 __pycache__
 /data
-/models/best_model.joblib
 mlruns
+models/best_model.joblib
