@@ -12,16 +12,16 @@ from forest_cover_type.features.build_features import build_features
 
 
 @click.command()
-@click.option("-d", "--dataset-path", default="data/train.csv", show_default=True, help="Path to csv with data.")
-@click.option("-s", "--save-model-path", default="models/model.joblib", show_default=True, help="Path to save trained model.")
-@click.option("--save-best-model-path", default="models/best_model.joblib", show_default=True, help="Path to save model with best accuracy across all runs.")
-@click.option("--random-state", default=42, show_default=True, help="Random state.")
-@click.option("--use-scaler", default=False, show_default=True, help="Specifies whether to scale the data.")
-@click.option("--bin-elevation", default=False, show_default=True, help="Specifies whether to bin 'Elevation' feature.")
-@click.option("--log-transform", default=False, show_default=True, help="Specifies whether to log-transform some of highly skewed features.")
+@click.option("-d", "--dataset-path", default="data/train.csv", type=click.Path(exists=True, dir_okay=False), show_default=True, help="Path to csv with data.")
+@click.option("-s", "--save-model-path", default="models/model.joblib", type=click.Path(dir_okay=False, writable=True), show_default=True, help="Path to save trained model.")
+@click.option("--save-best-model-path", default="models/best_model.joblib", type=click.Path(dir_okay=False, writable=True), show_default=True, help="Path to save model with best accuracy across all runs.")
+@click.option("--random-state", default=42, type=int, show_default=True, help="Random state.")
+@click.option("--use-scaler", default=False, type=bool, show_default=True, help="Specifies whether to scale the data.")
+@click.option("--bin-elevation", default=False, type=bool, show_default=True, help="Specifies whether to bin 'Elevation' feature.")
+@click.option("--log-transform", default=False, type=bool, show_default=True, help="Specifies whether to log-transform some of highly skewed features.")
 @click.option("--model", default="RandomForestClassifier", type=click.Choice(["LogisticRegression", "RandomForestClassifier"]), show_default=True, help="Name of model for training.")
-@click.option("--outer-cv-folds", default=5, show_default=True, help="Number of folds in outer cross-validation.")
-@click.option("--inner-cv-folds", default=3, show_default=True, help="Number of folds in inner cross-validation.")
+@click.option("--outer-cv-folds", default=5, type=int, show_default=True, help="Number of folds in outer cross-validation.")
+@click.option("--inner-cv-folds", default=3, type=int, show_default=True, help="Number of folds in inner cross-validation.")
 def train(dataset_path, save_model_path, save_best_model_path, random_state, use_scaler, bin_elevation, log_transform, model, outer_cv_folds, inner_cv_folds):
     """Script that trains a model and saves it to a file."""
     with mlflow.start_run(run_name=model):
