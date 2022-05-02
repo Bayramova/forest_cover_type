@@ -13,7 +13,7 @@ poetry install --no-dev
 ```
 5. If you want to get more detailed information about the dataset, you can generate an EDA report with the following command:
 ```
-poetry run train -d <path to csv with data> -s <path to save trained model>
+poetry run generate-eda -d <path to csv with data> -s <path to save generated EDA report>
 ``` 
 6. Run train with the following command:
 ```
