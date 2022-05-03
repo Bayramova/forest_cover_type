@@ -13,17 +13,17 @@ def runner():
 
 
 def test_train_succeeds(runner):
-    path_to_data = pathlib.Path().resolve()
+    temp_dir_path = pathlib.Path().resolve()
     with runner.isolated_filesystem():
         result = runner.invoke(train, [
-                               "--dataset-path", f"{path_to_data}/tests/fixtures/train.csv", "--save-model-path", "model.joblib", "--save-best-model-path", "best_model.joblib"])
+                               "--dataset-path", f"{temp_dir_path}/tests/fixtures/train.csv", "--save-model-path", "model.joblib", "--save-best-model-path", "best_model.joblib"])
         click.echo(result.output)
         assert result.exit_code == 0
         assert "Accuracy" in result.output
 
         # check saved model for correctness (check whether the model returns values within the expected categories [1,2,3,4,5,6,7])
         saved_model = joblib.load("model.joblib")
-        test_set = pd.read_csv(f"{path_to_data}/tests/fixtures/test.csv")
+        test_set = pd.read_csv(f"{temp_dir_path}/tests/fixtures/test.csv")
         preds = saved_model.predict(test_set)
         assert np.isin(np.unique(preds), np.array(
             [1, 2, 3, 4, 5, 6, 7]), assume_unique=True).all()
