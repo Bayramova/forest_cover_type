@@ -1,14 +1,12 @@
-from joblib import dump
-
 import click
+from joblib import dump
 import mlflow
-
 import numpy as np
-from sklearn.model_selection import cross_validate, KFold, GridSearchCV
+from sklearn.model_selection import cross_validate, GridSearchCV, KFold
 
 from forest_cover_type.data.load_dataset import load_dataset
-from forest_cover_type.models.make_pipeline import make_pipeline
 from forest_cover_type.features.build_features import build_features
+from forest_cover_type.models.make_pipeline import make_pipeline
 
 
 @click.command()

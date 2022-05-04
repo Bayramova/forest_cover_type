@@ -1,9 +1,8 @@
-import click
+import warnings
 
+import click
 import pandas as pd
 from pandas_profiling import ProfileReport
-
-import warnings
 
 warnings.filterwarnings("ignore")
 

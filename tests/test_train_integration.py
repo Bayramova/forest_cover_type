@@ -1,9 +1,11 @@
-import click
 import pathlib
+
+import click
 import joblib
 import numpy as np
 import pandas as pd
 import pytest
+
 from forest_cover_type.models.train import train
 
 
