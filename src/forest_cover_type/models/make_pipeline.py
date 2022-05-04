@@ -4,7 +4,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 
-def make_pipeline(model, use_scaler, random_state):
+def make_pipeline(model: str, use_scaler: bool, random_state: int) -> Pipeline:
     steps = []
     if use_scaler:
         steps.append(("scaler", StandardScaler()))
