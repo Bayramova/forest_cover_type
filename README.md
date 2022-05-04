@@ -14,7 +14,7 @@ poetry install --no-dev
 5. If you want to get more detailed information about the dataset, you can generate an EDA report with the following command:
 ```
 poetry run generate-eda -d <path to csv with data> -s <path to save generated EDA report>
-``` 
+```
 6. Run train with the following command:
 ```
 poetry run train -d <path to csv with data> -s <path to save trained model>
@@ -22,7 +22,7 @@ poetry run train -d <path to csv with data> -s <path to save trained model>
 You can configure additional options (such as model, hyperparameters tuning configuration, etc.) in the CLI. To get a full list of them, use help:
 ```
 poetry run train --help
-``` 
+```
 7. Run MLflow UI to see the information about experiments you conducted:
 ```
 poetry run mlflow ui
