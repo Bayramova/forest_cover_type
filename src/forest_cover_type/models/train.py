@@ -98,6 +98,6 @@ def train(dataset_path, save_model_path, save_best_model_path, random_state, use
 
         # load and save best model
         best_estimator = mlflow.sklearn.load_model(
-            f"{best_run['artifact_uri']}\model")
+            f"{best_run['artifact_uri']}/model")
         dump(best_estimator, save_best_model_path)
         click.echo(f"Best model is saved to {save_best_model_path}.")
