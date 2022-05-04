@@ -141,7 +141,7 @@ def train(
             f"Accuracy: {accuracy} +/- {round(scores['test_accuracy'].std() * 100, 3)}"
         )
         click.echo(
-            f"Log_loss: {log_loss} +/- {round(scores['test_neg_log_loss'].std() * 100, 3)}"
+            f"Loss: {log_loss} +/- {round(scores['test_neg_log_loss'].std() * 100, 3)}"
         )
         click.echo(
             f"Roc_auc: {roc_auc} +/- {round(scores['test_roc_auc_ovr'].std() * 100, 3)}"

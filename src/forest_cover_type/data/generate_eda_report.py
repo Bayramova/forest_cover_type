@@ -24,7 +24,10 @@ warnings.filterwarnings("ignore")
     help="Path to save generated EDA report.",
 )
 def generate_eda(dataset_path, save_report_path):
-    """Script that generates an EDA report and saves it as .html file in reports directory."""
+    """
+    Script that generates an EDA report
+    and saves it as .html file in reports directory.
+    """
     data = pd.read_csv(dataset_path)
     profile = ProfileReport(data)
     profile.to_file(save_report_path)
