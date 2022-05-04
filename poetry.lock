@@ -179,6 +179,21 @@ flake8 = ">=3.0.0"
 tomli = "*"
 
 [[package]]
+name = "flake8-bugbear"
+version = "22.4.25"
+description = "A plugin for flake8 finding likely bugs and design problems in your program. Contains warnings that don't belong in pyflakes and pycodestyle."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+attrs = ">=19.2.0"
+flake8 = ">=3.0.0"
+
+[package.extras]
+dev = ["coverage", "hypothesis", "hypothesmith (>=0.2)", "pre-commit"]
+
+[[package]]
 name = "flake8-import-order"
 version = "0.18.1"
 description = "Flake8 and pylama plugin that checks the ordering of import statements."
@@ -1122,7 +1137,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "50cfbb412ab2a726ab8f779a8b9afac824b7b226ada7c1bba0523dd1b3d277f9"
+content-hash = "2b13332d5cca5338407a78f20d50502a9064573e234c296d5ec87a3b632b3fda"
 
 [metadata.files]
 alembic = [
@@ -1205,6 +1220,10 @@ flake8 = [
 flake8-black = [
     {file = "flake8-black-0.3.2.tar.gz", hash = "sha256:6f6bf198f3f45df43245d1d1a0ba2035ee5817d167680f9e1af23cde70cb7548"},
     {file = "flake8_black-0.3.2-py3-none-any.whl", hash = "sha256:9c86b24ede16a80555808c6c4779d81bc54cff57d0dd1980029c0e4b39ac8b45"},
+]
+flake8-bugbear = [
+    {file = "flake8-bugbear-22.4.25.tar.gz", hash = "sha256:f7c080563fca75ee6b205d06b181ecba22b802babb96b0b084cc7743d6908a55"},
+    {file = "flake8_bugbear-22.4.25-py3-none-any.whl", hash = "sha256:ec374101cddf65bd7a96d393847d74e58d3b98669dbf9768344c39b6290e8bd6"},
 ]
 flake8-import-order = [
     {file = "flake8-import-order-0.18.1.tar.gz", hash = "sha256:a28dc39545ea4606c1ac3c24e9d05c849c6e5444a50fb7e9cdd430fc94de6e92"},
