@@ -15,8 +15,17 @@ def runner():
 def test_train_succeeds(runner):
     temp_dir_path = pathlib.Path().resolve()
     with runner.isolated_filesystem():
-        result = runner.invoke(train, [
-                               "--dataset-path", f"{temp_dir_path}/tests/fixtures/train.csv", "--save-model-path", "model.joblib", "--save-best-model-path", "best_model.joblib"])
+        result = runner.invoke(
+            train,
+            [
+                "--dataset-path",
+                f"{temp_dir_path}/tests/fixtures/train.csv",
+                "--save-model-path",
+                "model.joblib",
+                "--save-best-model-path",
+                "best_model.joblib",
+            ],
+        )
         click.echo(result.output)
         assert result.exit_code == 0
         assert "Accuracy" in result.output
@@ -25,5 +34,6 @@ def test_train_succeeds(runner):
         saved_model = joblib.load("model.joblib")
         test_set = pd.read_csv(f"{temp_dir_path}/tests/fixtures/test.csv")
         preds = saved_model.predict(test_set)
-        assert np.isin(np.unique(preds), np.array(
-            [1, 2, 3, 4, 5, 6, 7]), assume_unique=True).all()
+        assert np.isin(
+            np.unique(preds), np.array([1, 2, 3, 4, 5, 6, 7]), assume_unique=True
+        ).all()
