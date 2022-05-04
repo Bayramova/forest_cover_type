@@ -33,7 +33,7 @@ def test_train_succeeds(runner):
         assert "Accuracy" in result.output
 
         # check saved model for correctness
-        # (if the model returns values within the expected categories [1,2,3,4,5,6,7])
+        # (check if the model returns values within the expected categories [1,2,3,4,5,6,7])
         saved_model = joblib.load("model.joblib")
         test_set = pd.read_csv(f"{temp_dir_path}/tests/fixtures/test.csv")
         preds = saved_model.predict(test_set)
