@@ -1,5 +1,7 @@
 [flake8]
-select = BLK,C,E,F,W
+select = BLK,C,E,F,I,W
 ignore = E203,W503
 max-line-length = 88
 max-complexity = 10
+application-import-names = forest_cover_type,tests
+import-order-style = google
