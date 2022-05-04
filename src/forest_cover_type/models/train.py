@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 from joblib import dump
 import mlflow
@@ -79,17 +81,17 @@ from forest_cover_type.models.make_pipeline import make_pipeline
     help="Number of folds in inner cross-validation.",
 )
 def train(
-    dataset_path,
-    save_model_path,
-    save_best_model_path,
-    random_state,
-    use_scaler,
-    bin_elevation,
-    log_transform,
-    model,
-    outer_cv_folds,
-    inner_cv_folds,
-):
+    dataset_path: Path,
+    save_model_path: Path,
+    save_best_model_path: Path,
+    random_state: int,
+    use_scaler: bool,
+    bin_elevation: bool,
+    log_transform: bool,
+    model: str,
+    outer_cv_folds: int,
+    inner_cv_folds: int,
+) -> None:
     """Script that trains a model and saves it to a file."""
     with mlflow.start_run(run_name=model):
         X, y = load_dataset(dataset_path=dataset_path)
@@ -108,7 +110,7 @@ def train(
         elif model == "RandomForestClassifier":
             param_grid = {
                 "clf__n_estimators": list(range(100, 600, 100)),
-                "clf__max_depth": list(range(2, 11, 2)) + [None],
+                "clf__max_depth": list(range(2, 11, 2)) + [None],  # type: ignore
                 "clf__min_samples_split": list(range(2, 11, 2)),
             }
 
