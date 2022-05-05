@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import Any, Dict, List
+import warnings
 
 import click
 from joblib import dump
@@ -9,6 +11,8 @@ from sklearn.model_selection import cross_validate, GridSearchCV, KFold
 from forest_cover_type.data.load_dataset import load_dataset
 from forest_cover_type.features.build_features import build_features
 from forest_cover_type.models.make_pipeline import make_pipeline
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 @click.command()
@@ -102,17 +106,14 @@ def train(
         )
 
         # set up parameters grid
+        param_grid: Dict[str, List[Any]] = dict()
         if model == "LogisticRegression":
-            param_grid = {
-                "clf__C": np.power(10.0, range(-2, 3)),
-                "clf__max_iter": list(range(500, 1000, 100)),
-            }
+            param_grid["clf__C"] = np.power(10.0, range(-2, 3))
+            param_grid["clf__max_iter"] = list(range(500, 1000, 100))
         elif model == "RandomForestClassifier":
-            param_grid = {
-                "clf__n_estimators": list(range(100, 600, 100)),
-                "clf__max_depth": list(range(2, 11, 2)) + [None],  # type: ignore
-                "clf__min_samples_split": list(range(2, 11, 2)),
-            }
+            param_grid["clf__n_estimators"] = list(range(100, 600, 100))
+            param_grid["clf__max_depth"] = [*list(range(2, 11, 2)), None]
+            param_grid["clf__min_samples_split"] = list(range(2, 11, 2))
 
         # execute nested cv
         cv_inner = KFold(
