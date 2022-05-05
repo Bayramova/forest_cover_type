@@ -1,3 +1,4 @@
+from pathlib import Path
 import warnings
 
 import click
@@ -12,6 +13,7 @@ warnings.filterwarnings("ignore")
     "-d",
     "--dataset-path",
     default="data/train.csv",
+    type=click.Path(exists=True, dir_okay=False),
     show_default=True,
     help="Path to csv with data.",
 )
@@ -19,10 +21,11 @@ warnings.filterwarnings("ignore")
     "-s",
     "--save-report-path",
     default="reports/eda_report.html",
+    type=click.Path(dir_okay=False, writable=True),
     show_default=True,
     help="Path to save generated EDA report.",
 )
-def generate_eda(dataset_path, save_report_path):
+def generate_eda(dataset_path: Path, save_report_path: Path) -> None:
     """
     Script that generates an EDA report
     and saves it as .html file in reports directory.
