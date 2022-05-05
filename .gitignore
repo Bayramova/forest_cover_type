@@ -1,4 +1,7 @@
 __pycache__
+.mypy_cache
+.nox
+.pytest_cache
 /data
 mlruns
 models/best_model.joblib
