@@ -1,7 +1,10 @@
 import numpy as np
+import pandas as pd
 
 
-def build_features(X, bin_elevation, log_transform):
+def build_features(
+    X: pd.DataFrame, bin_elevation: bool, log_transform: bool
+) -> pd.DataFrame:
     data = X.copy()
     if bin_elevation:
         data["Binned_Elevation"] = data["Elevation"].apply(lambda x: np.floor(x / 50))
