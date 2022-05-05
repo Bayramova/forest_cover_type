@@ -1,6 +1,7 @@
 import pathlib
 
 import click
+from click.testing import CliRunner
 import joblib
 import numpy as np
 import pandas as pd
@@ -10,11 +11,11 @@ from forest_cover_type.models.train import train
 
 
 @pytest.fixture
-def runner():
-    return click.testing.CliRunner()
+def runner() -> CliRunner:
+    return CliRunner()
 
 
-def test_train_succeeds(runner):
+def test_train_succeeds(runner: CliRunner) -> None:
     temp_dir_path = pathlib.Path().resolve()
     with runner.isolated_filesystem():
         result = runner.invoke(
