@@ -1,4 +1,4 @@
-![Tests](https://github.com/Bayramova/rs_final_project/workflows/tests.yml/badge.svg)
+![Tests](https://github.com/Bayramova/rs_final_project/actions/workflows/tests.yml/badge.svg)
 
 Final project for RS School Machine Learning course.
 
