@@ -1,3 +1,5 @@
+![Tests](https://github.com/Bayramova/rs_final_project/workflows/tests.yml/badge.svg)
+
 Final project for RS School Machine Learning course.
 
 This demo uses [Forest Cover Type](https://www.kaggle.com/competitions/forest-cover-type-prediction) dataset.
