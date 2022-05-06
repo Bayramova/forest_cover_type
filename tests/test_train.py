@@ -16,7 +16,7 @@ def test_train_fails_on_invalid_dataset_path(runner: CliRunner) -> None:
 
 
 def test_train_fails_on_invalid_save_model_path(runner: CliRunner) -> None:
-    result = runner.invoke(train, ["--save-model-path", "models/"])
+    result = runner.invoke(train, ["--save-model-path", "data/"])
     assert result.exit_code == 2
     assert "Invalid value for '-s' / '--save-model-path'" in result.output
 
