@@ -10,15 +10,7 @@ locations = "src", "tests", "noxfile.py"
 
 
 def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
-    """Install packages constrained by Poetry's lock file.
-    By default newest versions of packages are installed,
-    but we use versions from poetry.lock instead to guarantee reproducibility of sessions.
-
-    Arguments:
-        session: The Session object.
-        args: Command-line arguments for pip.
-        kwargs: Additional keyword arguments for Session.install.
-    """
+    """Install packages constrained by Poetry's lock file."""
     requirements = tempfile.NamedTemporaryFile(mode="w", delete=False)
     session.run(
         "poetry",
@@ -44,7 +36,7 @@ def black(session: Session) -> None:
 
 @nox.session(python="3.9")
 def lint(session: Session) -> None:
-    """Run flake8 linting."""
+    """Lint using flake8."""
     args = session.posargs or locations
     install_with_constraints(
         session,

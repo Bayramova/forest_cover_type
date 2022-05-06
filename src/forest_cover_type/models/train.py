@@ -27,14 +27,14 @@ warnings.filterwarnings("ignore", category=UserWarning)
 @click.option(
     "-s",
     "--save-model-path",
-    default="models/model.joblib",
+    default="data/model.joblib",
     type=click.Path(dir_okay=False, writable=True),
     show_default=True,
     help="Path to save trained model.",
 )
 @click.option(
     "--save-best-model-path",
-    default="models/best_model.joblib",
+    default="data/best_model.joblib",
     type=click.Path(dir_okay=False, writable=True),
     show_default=True,
     help="Path to save model with best accuracy across all runs.",
