@@ -4,3 +4,4 @@ __pycache__
 .pytest_cache
 /data
 mlruns
+src/forest_cover_type/models/predict.py
