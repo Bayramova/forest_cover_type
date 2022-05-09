@@ -71,6 +71,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
     help="Name of model for training.",
 )
 @click.option(
+    "--nested-cv",
+    default=True,
+    type=bool,
+    show_default=True,
+    help="Specifies whether to use nested CV with GridSearch or ordinary CV.",
+)
+@click.option(
     "--outer-cv-folds",
     default=5,
     type=int,
@@ -84,6 +91,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
     show_default=True,
     help="Number of folds in inner cross-validation.",
 )
+@click.option(
+    "--n-splits",
+    default=5,
+    type=int,
+    show_default=True,
+    help="Number of folds in cross-validation.",
+)
 def train(
     dataset_path: Path,
     save_model_path: Path,
@@ -93,8 +107,10 @@ def train(
     bin_elevation: bool,
     log_transform: bool,
     model: str,
+    nested_cv: bool,
     outer_cv_folds: int,
     inner_cv_folds: int,
+    n_splits: int,
 ) -> None:
     """Script that trains a model and saves it to a file."""
     with mlflow.start_run(run_name=model):
@@ -105,34 +121,59 @@ def train(
             model=model, use_scaler=use_scaler, random_state=random_state
         )
 
-        # set up parameters grid
-        param_grid: Dict[str, List[Any]] = dict()
-        if model == "LogisticRegression":
-            param_grid["clf__C"] = np.power(10.0, range(-2, 3))
-            param_grid["clf__max_iter"] = list(range(500, 1000, 100))
-        elif model == "RandomForestClassifier":
-            param_grid["clf__n_estimators"] = list(range(100, 600, 100))
-            param_grid["clf__max_depth"] = [*list(range(2, 11, 2)), None]
-            param_grid["clf__min_samples_split"] = list(range(2, 11, 2))
+        if nested_cv:
+            # set up parameters grid
+            param_grid: Dict[str, List[Any]] = dict()
+            if model == "LogisticRegression":
+                param_grid["clf__C"] = np.power(10.0, range(-2, 3))
+                param_grid["clf__max_iter"] = list(range(500, 1000, 100))
+            elif model == "RandomForestClassifier":
+                param_grid["clf__n_estimators"] = list(range(100, 600, 100))
+                param_grid["clf__max_depth"] = [*list(range(2, 11, 2)), None]
+                param_grid["clf__min_samples_split"] = list(range(2, 11, 2))
 
-        # execute nested cv
-        cv_inner = KFold(
-            n_splits=inner_cv_folds, shuffle=True, random_state=random_state
-        )
-        gridcv = GridSearchCV(
-            pipeline, param_grid, scoring="accuracy", n_jobs=-1, cv=cv_inner, refit=True
-        )
-        cv_outer = KFold(
-            n_splits=outer_cv_folds, shuffle=True, random_state=random_state
-        )
-        scores = cross_validate(
-            gridcv,
-            X,
-            y,
-            cv=cv_outer,
-            scoring=("accuracy", "neg_log_loss", "roc_auc_ovr"),
-            n_jobs=-1,
-        )
+            # execute nested cv
+            cv_inner = KFold(
+                n_splits=inner_cv_folds, shuffle=True, random_state=random_state
+            )
+            gridcv = GridSearchCV(
+                pipeline,
+                param_grid,
+                scoring="accuracy",
+                n_jobs=-1,
+                cv=cv_inner,
+                refit=True,
+            )
+            cv_outer = KFold(
+                n_splits=outer_cv_folds, shuffle=True, random_state=random_state
+            )
+            scores = cross_validate(
+                gridcv,
+                X,
+                y,
+                cv=cv_outer,
+                scoring=("accuracy", "neg_log_loss", "roc_auc_ovr"),
+                n_jobs=-1,
+            )
+
+            # configure final model
+            gridcv.fit(X, y)
+            click.echo(f"Best Parameters: {gridcv.best_params_}")
+            trained_model = gridcv.best_estimator_
+
+        else:
+            # ordinal cv
+            cv = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+            scores = cross_validate(
+                pipeline,
+                X,
+                y,
+                cv=cv,
+                scoring=("accuracy", "neg_log_loss", "roc_auc_ovr"),
+                n_jobs=-1,
+            )
+
+            trained_model = pipeline.fit(X, y)
 
         # report performance
         accuracy = scores["test_accuracy"].mean()
@@ -148,10 +189,7 @@ def train(
             f"Roc_auc: {roc_auc} +/- {round(scores['test_roc_auc_ovr'].std() * 100, 3)}"
         )
 
-        # configure final model
-        gridcv.fit(X, y)
-        click.echo(f"Best Parameters: {gridcv.best_params_}")
-        dump(gridcv.best_estimator_, save_model_path)
+        dump(trained_model, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")
 
         # log parameters, metrics and model to mlflow
@@ -159,19 +197,33 @@ def train(
         mlflow.log_param("bin_elevation", bin_elevation)
         mlflow.log_param("log_transform", log_transform)
         if model == "LogisticRegression":
-            mlflow.log_param("logreg_c", gridcv.best_params_["clf__C"])
-            mlflow.log_param("max_iter", gridcv.best_params_["clf__max_iter"])
-        elif model == "RandomForestClassifier":
-            mlflow.log_param("n_estimators", gridcv.best_params_["clf__n_estimators"])
-            mlflow.log_param("max_depth", gridcv.best_params_["clf__max_depth"])
             mlflow.log_param(
-                "min_samples_split", gridcv.best_params_["clf__min_samples_split"]
+                "logreg_c", gridcv.best_params_["clf__C"] if nested_cv else "default"
+            )
+            mlflow.log_param(
+                "max_iter",
+                gridcv.best_params_["clf__max_iter"] if nested_cv else "default",
+            )
+        elif model == "RandomForestClassifier":
+            mlflow.log_param(
+                "n_estimators",
+                gridcv.best_params_["clf__n_estimators"] if nested_cv else "default",
+            )
+            mlflow.log_param(
+                "max_depth",
+                gridcv.best_params_["clf__max_depth"] if nested_cv else "default",
+            )
+            mlflow.log_param(
+                "min_samples_split",
+                gridcv.best_params_["clf__min_samples_split"]
+                if nested_cv
+                else "default",
             )
 
         mlflow.log_metrics(
             {"accuracy": accuracy, "log_loss": log_loss, "roc_auc": roc_auc}
         )
-        mlflow.sklearn.log_model(pipeline, "model")
+        mlflow.sklearn.log_model(trained_model, "model")
 
         # search for best run
         best_run = mlflow.search_runs(

@@ -1,3 +1,4 @@
+import click
 import numpy as np
 import pandas as pd
 
@@ -27,4 +28,5 @@ def build_features(
         # data["Horizontal_Distance_To_Hydrology_Log"] = data[
         #     "Horizontal_Distance_To_Hydrology"
         # ].apply(lambda x: np.log(x + 1))
+    click.echo(f"Dataset shape after feature engineering: {data.shape}")
     return data
