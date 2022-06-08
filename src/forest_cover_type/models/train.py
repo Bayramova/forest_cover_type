@@ -1,16 +1,18 @@
 from pathlib import Path
-from typing import Any, Dict, List
 import warnings
 
 import click
 from joblib import dump
 import mlflow
-import numpy as np
-from sklearn.model_selection import cross_validate, GridSearchCV, KFold
 
 from forest_cover_type.data.load_dataset import load_dataset
 from forest_cover_type.features.build_features import build_features
 from forest_cover_type.models.make_pipeline import make_pipeline
+from forest_cover_type.models.select_and_evaluate import (
+    get_tuned_model,
+    KFoldCV,
+    nestedCV,
+)
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -50,23 +52,11 @@ warnings.filterwarnings("ignore", category=UserWarning)
     help="Specifies whether to scale the data.",
 )
 @click.option(
-    "--bin-elevation",
-    default=False,
-    type=bool,
-    show_default=True,
-    help="Specifies whether to bin 'Elevation' feature.",
-)
-@click.option(
-    "--log-transform",
-    default=False,
-    type=bool,
-    show_default=True,
-    help="Specifies whether to log-transform some of highly skewed features.",
-)
-@click.option(
     "--model",
-    default="RandomForestClassifier",
-    type=click.Choice(["LogisticRegression", "RandomForestClassifier"]),
+    default="ExtraTreeClassifier",
+    type=click.Choice(
+        ["LogisticRegression", "RandomForestClassifier", "ExtraTreeClassifier"]
+    ),
     show_default=True,
     help="Name of model for training.",
 )
@@ -91,88 +81,36 @@ warnings.filterwarnings("ignore", category=UserWarning)
     show_default=True,
     help="Number of folds in inner cross-validation.",
 )
-@click.option(
-    "--n-splits",
-    default=5,
-    type=int,
-    show_default=True,
-    help="Number of folds in cross-validation.",
-)
 def train(
     dataset_path: Path,
     save_model_path: Path,
     save_best_model_path: Path,
     random_state: int,
     use_scaler: bool,
-    bin_elevation: bool,
-    log_transform: bool,
     model: str,
     nested_cv: bool,
     outer_cv_folds: int,
     inner_cv_folds: int,
-    n_splits: int,
 ) -> None:
     """Script that trains a model and saves it to a file."""
+
     with mlflow.start_run(run_name=model):
         X, y = load_dataset(dataset_path=dataset_path)
-        X = build_features(X, bin_elevation=bin_elevation, log_transform=log_transform)
+        X = build_features(X)
 
         pipeline = make_pipeline(
             model=model, use_scaler=use_scaler, random_state=random_state
         )
 
         if nested_cv:
-            # set up parameters grid
-            param_grid: Dict[str, List[Any]] = dict()
-            if model == "LogisticRegression":
-                param_grid["clf__C"] = np.power(10.0, range(-2, 3))
-                param_grid["clf__max_iter"] = list(range(500, 1000, 100))
-            elif model == "RandomForestClassifier":
-                param_grid["clf__n_estimators"] = list(range(100, 600, 100))
-                param_grid["clf__max_depth"] = [*list(range(2, 11, 2)), None]
-                param_grid["clf__min_samples_split"] = list(range(2, 11, 2))
-
-            # execute nested cv
-            cv_inner = KFold(
-                n_splits=inner_cv_folds, shuffle=True, random_state=random_state
+            scores = nestedCV(
+                pipeline, model, X, y, random_state, outer_cv_folds, inner_cv_folds
             )
-            gridcv = GridSearchCV(
-                pipeline,
-                param_grid,
-                scoring="accuracy",
-                n_jobs=-1,
-                cv=cv_inner,
-                refit=True,
+            trained_model, params = get_tuned_model(
+                pipeline, model, X, y, random_state, outer_cv_folds
             )
-            cv_outer = KFold(
-                n_splits=outer_cv_folds, shuffle=True, random_state=random_state
-            )
-            scores = cross_validate(
-                gridcv,
-                X,
-                y,
-                cv=cv_outer,
-                scoring=("accuracy", "neg_log_loss", "roc_auc_ovr"),
-                n_jobs=-1,
-            )
-
-            # configure final model
-            gridcv.fit(X, y)
-            click.echo(f"Best Parameters: {gridcv.best_params_}")
-            trained_model = gridcv.best_estimator_
-
         else:
-            # ordinal cv
-            cv = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
-            scores = cross_validate(
-                pipeline,
-                X,
-                y,
-                cv=cv,
-                scoring=("accuracy", "neg_log_loss", "roc_auc_ovr"),
-                n_jobs=-1,
-            )
-
+            scores = KFoldCV(pipeline, X, y, random_state, outer_cv_folds)
             trained_model = pipeline.fit(X, y)
 
         # report performance
@@ -189,41 +127,19 @@ def train(
             f"Roc_auc: {roc_auc} +/- {round(scores['test_roc_auc_ovr'].std() * 100, 3)}"
         )
 
-        dump(trained_model, save_model_path)
-        click.echo(f"Model is saved to {save_model_path}.")
-
         # log parameters, metrics and model to mlflow
+        if nested_cv:
+            mlflow.log_params(params)
         mlflow.log_param("use_scaler", use_scaler)
-        mlflow.log_param("bin_elevation", bin_elevation)
-        mlflow.log_param("log_transform", log_transform)
-        if model == "LogisticRegression":
-            mlflow.log_param(
-                "logreg_c", gridcv.best_params_["clf__C"] if nested_cv else "default"
-            )
-            mlflow.log_param(
-                "max_iter",
-                gridcv.best_params_["clf__max_iter"] if nested_cv else "default",
-            )
-        elif model == "RandomForestClassifier":
-            mlflow.log_param(
-                "n_estimators",
-                gridcv.best_params_["clf__n_estimators"] if nested_cv else "default",
-            )
-            mlflow.log_param(
-                "max_depth",
-                gridcv.best_params_["clf__max_depth"] if nested_cv else "default",
-            )
-            mlflow.log_param(
-                "min_samples_split",
-                gridcv.best_params_["clf__min_samples_split"]
-                if nested_cv
-                else "default",
-            )
 
         mlflow.log_metrics(
             {"accuracy": accuracy, "log_loss": log_loss, "roc_auc": roc_auc}
         )
         mlflow.sklearn.log_model(trained_model, "model")
+
+        # save model
+        dump(trained_model, save_model_path)
+        click.echo(f"Model is saved to {save_model_path}.")
 
         # search for best run
         best_run = mlflow.search_runs(
