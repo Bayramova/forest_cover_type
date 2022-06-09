@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from forest_cover_type.features.build_features import build_features
 from forest_cover_type.models.train import train
 
 
@@ -33,11 +34,11 @@ def test_train_succeeds(runner: CliRunner) -> None:
         assert result.exit_code == 0
         assert "Accuracy" in result.output
 
-        # check saved model for correctness
-        # (check if the model returns values within the expected categories [1,2,3,4,5,6,7])
+        # check if the model returns values within the expected categories [1,2,3,4,5,6,7]
         saved_model = joblib.load("model.joblib")
-        test_set = pd.read_csv(f"{temp_dir_path}/tests/fixtures/test.csv")
-        preds = saved_model.predict(test_set)
+        test = pd.read_csv(f"{temp_dir_path}/tests/fixtures/test.csv")
+        test = build_features(test)
+        preds = saved_model.predict(test)
         assert np.isin(
             np.unique(preds), np.array([1, 2, 3, 4, 5, 6, 7]), assume_unique=True
         ).all()
