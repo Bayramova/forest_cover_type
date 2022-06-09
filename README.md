@@ -33,7 +33,7 @@ poetry run mlflow ui
 
 8. Run predict to create submission file with predictions:
 ```
-poetry run predict
+poetry run predict -t <path to csv with test data> -s <path to save submission file> -m <path to the trained model>
 ```
 
 ## Development
