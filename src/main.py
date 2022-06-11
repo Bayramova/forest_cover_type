@@ -7,7 +7,7 @@ import streamlit as st
 
 from forest_cover_type.features.build_features import build_features
 
-model_path = "data/best_model.joblib"
+model_path = "models/model.joblib"
 columns = [
     "Elevation",
     "Aspect",
