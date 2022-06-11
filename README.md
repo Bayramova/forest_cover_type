@@ -55,7 +55,7 @@ Format your code with [black](https://github.com/psf/black) and lint it with [fl
 poetry run black src tests noxfile.py
 ```
 ```
-poetry run flake8
+poetry run flake8 src tests noxfile.py
 ```
 ![photo_2022-05-04_11-30-52](https://user-images.githubusercontent.com/32398773/167128312-068f8980-bb2f-4c07-95ac-3ecaa8aad83c.jpg)
 
