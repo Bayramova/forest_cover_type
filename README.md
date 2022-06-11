@@ -1,7 +1,7 @@
 ![Tests](https://github.com/Bayramova/rs_final_project/actions/workflows/tests.yml/badge.svg)
 
 # Forest Cover Type Prediction
-
+[Demo](https://share.streamlit.io/bayramova/forest_cover_type/main/src/main.py)
 This project uses [Forest Cover Type](https://www.kaggle.com/competitions/forest-cover-type-prediction) dataset.
 
 ## Usage
