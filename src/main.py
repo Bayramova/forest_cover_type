@@ -103,21 +103,21 @@ def predict(input: List[Any]) -> str:
 st.title("Forest Cover Type Prediction")
 
 # get the input data from the user
-Elevation = st.number_input("Elevation in meters")
-Aspect = st.number_input("Aspect in degrees azimuth")
-Slope = st.number_input("Slope in degrees")
+Elevation = st.number_input("Elevation in meters", 0)
+Aspect = st.number_input("Aspect in degrees azimuth", 0, 360)
+Slope = st.number_input("Slope in degrees", 0, 90)
 Horizontal_Distance_To_Hydrology = st.number_input(
-    "Horz Dist to nearest surface water features"
+    "Horz Dist to nearest surface water features", 0
 )
 Vertical_Distance_To_Hydrology = st.number_input(
     "Vert Dist to nearest surface water features"
 )
-Horizontal_Distance_To_Roadways = st.number_input("Horz Dist to nearest roadway")
+Horizontal_Distance_To_Roadways = st.number_input("Horz Dist to nearest roadway", 0)
 Hillshade_9am = st.number_input("Hillshade index at 9am, summer solstice", 0, 255)
 Hillshade_Noon = st.number_input("Hillshade index at noon, summer solstice", 0, 255)
 Hillshade_3pm = st.number_input("Hillshade index at 3pm, summer solstice", 0, 255)
 Horizontal_Distance_To_Fire_Points = st.number_input(
-    "Horz Dist to nearest wildfire ignition points"
+    "Horz Dist to nearest wildfire ignition points", 0
 )
 Wilderness_Area = st.number_input("Wilderness area designation", 1, 4)
 Soil_Type = st.number_input("Soil Type designation", 1, 40)
