@@ -1,8 +1,8 @@
 ![Tests](https://github.com/Bayramova/rs_final_project/actions/workflows/tests.yml/badge.svg)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/bayramova/forest_cover_type/main/src/main.py)
 
 # Forest Cover Type Prediction
 This project trains Extra Tree/Random Forest/Logistic Regression model to classify the forest cover type based on data from corresponding [Kaggle competition](https://www.kaggle.com/competitions/forest-cover-type-prediction).  
-[Demo](https://share.streamlit.io/bayramova/forest_cover_type/main/src/main.py) 
 
 ## About the Project
 The goal of this project is not only to apply machine learning knowledge, but also to learn Python tools and best practices.   
